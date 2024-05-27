@@ -1,0 +1,57 @@
+sourceSets {
+    main
+    datagen {
+        compileClasspath += main.compileClasspath + main.output
+        runtimeClasspath += main.runtimeClasspath + main.output
+    }
+}
+
+loom {
+    runs {
+        configureEach {
+            ideConfigGenerated(true)
+        }
+        client {
+            client()
+        }
+        data {
+            data()
+            configName = "Neo Data"
+
+            programArgs("--mod", "${archives_name}", "--all", "--output", "${project(":common").file("src/generated/resources/")}", "--existing", "${file("src/main/resources/")}")
+
+            mods {
+                "bug_example" {
+                    sourceSet(sourceSets.main)
+                    sourceSet(sourceSets.datagen)
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = 'NeoForged'
+        url = 'https://maven.neoforged.net/releases'
+    }
+}
+
+dependencies {
+    neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
+
+    compileOnly(project(path: ':common', configuration: 'namedElements')) { transitive false }
+}
+
+processResources {
+    from(project(":common").sourceSets.main.resources)
+    inputs.property 'version', project.version
+
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand version: project.version
+    }
+}
+
+tasks.named("compileJava", JavaCompile) {
+    source(project(":common").sourceSets.main.allJava)
+}
